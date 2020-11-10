@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Devoir semaine 10 - Spike attrape un diamant </title>
+
+    <style>
+        body {
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid black;
+            cursor: pointer;
+            background: linear-gradient(to bottom, #d0ecf4, #00bbd6);
+        }
+
+        h2 {
+            color: #0b5d69;
+            font: bold italic 18px Calibri;
+        }
+
+    </style>
+</head>
+
+
+<body>
+    <h2>Aider Spike à attraper le diamant en bougeant les touches fléchées du clavier</h2>
+    <!-- Créer la balise canvas et modifier ensuite ses dimensions -->
+    <canvas width="640" height="320"></canvas>
+
+    <script>
+        //Récupérer la balise canvas et définir son contexte de dessin en 2d
+        let leCanvas = document.querySelector("canvas");
+        let ctx = leCanvas.getContext("2d");
+
+        //l'image du premier objet, qu'on pourra déplacer avec les touches
+        let imgObjet1 = new Image(); //le personnage contrôlable: Spike
+        imgObjet1.src = "images/spike.png";
+
+        let posXObjet1 = 0;
+        let posYObjet1 = leCanvas.height * 2 / 3;
+        let vitesseXObjet1 = 5;
+        let vitesseYObjet1 = 5;
+
+        //Image du diamant unique
+        let imgDiamant = new Image(); //le diamant à attraper
+        imgDiamant.src = "images/diamant.png";
+
+        //Image du diamant animé
+        let imgDiamantAnim = new Image();
+        imgDiamantAnim.src = "images/diamantAnimation.png";
+        //Caractéristiques des images de la feuille de sprites du diamant animé
+        let largeurVignette = 46;
+        let hauteurVignette = 50;
+        let nbVignettes = 5;
+        let indexVignette = 0;
+        let sourceX = 0;
+        
+        //Autres variables pour le diamant
+        let posXDiamant = (leCanvas.width - largeurVignette) / 2;
+        let posYDiamant = leCanvas.height / 5;
+
+        //Variable pour gérer l'affichage du jeu
+        let debutJeu = false;
+        let intervalIDActualiserJeu; //Sera défini quand l'utilisateur partira le jeu
+
+        //Pour savoir si les touches fléchées du clavier sont appuyées
+        let flecheGauche = false;
+        let flecheDroite = false;
+        let flecheHaut = false;
+        let flecheBas = false;
+        
+
+        //On affiche le texte de la consigne au début du jeu
+        afficherConsigne();
+
+        //Écouteur sur le document pour détecter si des touches de clavier sont appuyées ou relâchées
+        document.addEventListener("keydown", presserTouche);
+        document.addEventListener("keyup", relacherTouche);
+
+
+        //********** SECTIONS DES FONCTIONS **********//               
+        // Détecte quelles touches sont appuyées et recommence la partie
+        
+        function presserTouche(event) {
+            //Enregistrer si une touche gauche/droite est pressée
+            if (event.keyCode == 39 || event.keyCode == 68) { //flèche droite - ou D
+                flecheDroite = true;
+            }
+            if (event.keyCode == 37 || event.keyCode == 65) { //flèche gauche - ou A
+                flecheGauche = true;
+            }
+
+            //Enregistrer si une touche haut/bas est pressée
+            if (event.keyCode == 38 || event.keyCode == 87) { //flèche haut - ou W
+                flecheHaut = true;
+            }
+            if (event.keyCode == 40 || event.keyCode == 83) { //flèche bas - ou S
+                flecheBas = true;
+            }
+        }
+        
+        function relacherTouche(event) {
+            //Enregistrer si une touche gauche/droite est relâchée
+            if (event.keyCode == 39 || event.keyCode == 68) { //flèche droite - ou D
+                flecheDroite = false;
+            }
+            if (event.keyCode == 37 || event.keyCode == 65) { //flèche gauche - ou A
+                flecheGauche = false;
+            }
+
+            //Enregistrer si une touche haut/bas est relâchée
+            if (event.keyCode == 38 || event.keyCode == 87) { //flèche haut - ou W
+                flecheHaut = false;
+            }
+            if (event.keyCode == 40 || event.keyCode == 83) { //flèche bas - ou S
+                flecheBas = false;
+            }
+
+
+            //Enregistrer si une touche haut/bas ou W/S est relâchée
+            if (event.keyCode == 38 || event.keyCode == 87) { //flèche haut - ou W
+                flecheHaut = false;
+            } else if (event.keyCode == 40 || event.keyCode == 83) { //flèche bas - ou S
+                flecheBas = false;
+            }
+            
+            //On part le jeu si le joueur appuie sur la touche Enter
+            if (event.keyCode == 13) {
+                actualiserJeu();
+                //On part le setInterval qui actualise le jeu
+                intervalIDActualiserJeu = setInterval(actualiserJeu, 1000/60)
+                //On mémorise que le jeu est débuté
+                debutJeu = true;
+            }
+            
+        }
+
+        //Détecte si l'objet 1 touche l'objet 2
+        function detecterCollision(imgObjet2, posXObjet2, posYObjet2) {
+            if (posXObjet1 < posXObjet2 + imgObjet2.width &&
+                posXObjet1 + imgObjet1.width > posXObjet2 &&
+                posYObjet1 < posYObjet2 + imgObjet2.height &&
+                posYObjet1 + imgObjet1.height > posYObjet2) {
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
+        //Actualiser l'affichage des objets et les actions du jeu
+        function actualiserJeu() {
+            //Effacer le contenu actuel du contexte de rendu du canvas
+            ctx.clearRect(0, 0, leCanvas.width, leCanvas.height);
+
+            //Déplacer le personnage
+            deplacerPersonnage();
+
+            //Dessiner le diamant
+            ctx.drawImage(imgDiamant, posXDiamant, posYDiamant);
+            
+            //********Détecter Colision**************//
+            //Vérifie si les 2 objets se touchent en appelant la fonction de détection de colision
+            let siContactObjet1EtDiamant = detecterCollision(imgDiamant, posXDiamant, posYDiamant);
+
+            //Si les 2 objets se touchent alors on part l'animation du diamant et on arrête celle de l'actualisation du jeu
+            if (siContactObjet1EtDiamant) {
+                animerDiamant();
+                clearInterval(intervalIDActualiserJeu);
+            }
+        }
+
+        //Fonction pour déplacer le personnage
+        function deplacerPersonnage() {
+            //Calculer les futures positions de l'objet1
+            if (flecheDroite) {
+                posXObjet1 += vitesseXObjet1;
+            }
+            if (flecheGauche) {
+                posXObjet1 -= vitesseXObjet1;
+            }
+
+            if (flecheHaut) {
+                posYObjet1 -= vitesseYObjet1;
+            }
+            if (flecheBas) {
+                posYObjet1 += vitesseYObjet1;
+            }
+
+            //Empêcher l'objet1 de quitter les limites de la scène
+            //----- Axe horizontal
+            //Limite gauche
+            if (posXObjet1 < 0) {
+                posXObjet1 = 0
+            }
+            //Limite droite
+            let posXmax = leCanvas.width - imgObjet1.width;
+            if (posXObjet1 > posXmax) {
+                posXObjet1 = posXmax;
+            }
+
+            //----- Axe vertical
+            //Limite haut
+            if (posYObjet1 < 0) {
+                posYObjet1 = 0
+            }
+            //Limite bas
+            let posYmax = leCanvas.height - imgObjet1.height;
+            if (posYObjet1 > posYmax) {
+                posYObjet1 = posYmax;
+            }
+
+            //Dessiner le personnage (imgObjet1)
+            ctx.drawImage(imgObjet1, posXObjet1, posYObjet1);
+        }
+
+
+        //Fonction npour animer la feuille de sprite du diamant
+        function animerDiamant() {
+            //Effacer le contenu actuel du contexte de rendu du canvas
+            ctx.clearRect(0, 0, leCanvas.width, leCanvas.height);
+
+            //Gérer adéquatement l'affichage et l'animation de la feuille de sprites du diamant
+            ctx.drawImage(imgDiamantAnim, sourceX, 0, largeurVignette, hauteurVignette, posXDiamant, posYDiamant, largeurVignette, hauteurVignette);
+        }
+
+
+        //Fonction pour dessiner le texte de la consigne
+        function afficherConsigne() {
+            //Styles du texte      
+            ctx.font = "bold italic 32px Calibri";
+            ctx.textBaseline = "middle";
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#0b5d69";
+            ctx.textAlign = "center";
+            ctx.fillText("Appuyer sur Enter pour débuter le jeu", leCanvas.width / 2, leCanvas.height / 2);
+        }
+
+    </script>
+
+</body>
+
+</html>
