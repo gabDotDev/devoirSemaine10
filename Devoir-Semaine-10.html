@@ -131,10 +131,10 @@
             if (event.keyCode == 13) {
                 actualiserJeu();
                 //On part le setInterval qui actualise le jeu
-                intervalIDActualiserJeu = setInterval(actualiserJeu, 1000/60)
+                intervalIDActualiserJeu = setInterval(actualiserJeu, 1000/60);
                 //On mémorise que le jeu est débuté
                 debutJeu = true;
-            }
+            } 
             
         }
 
@@ -168,8 +168,8 @@
 
             //Si les 2 objets se touchent alors on part l'animation du diamant et on arrête celle de l'actualisation du jeu
             if (siContactObjet1EtDiamant) {
-                animerDiamant();
                 clearInterval(intervalIDActualiserJeu);
+                setInterval(animerDiamant, 1000/12);
             }
         }
 
@@ -224,7 +224,16 @@
             ctx.clearRect(0, 0, leCanvas.width, leCanvas.height);
 
             //Gérer adéquatement l'affichage et l'animation de la feuille de sprites du diamant
+            //On dessine le diamant animé
             ctx.drawImage(imgDiamantAnim, sourceX, 0, largeurVignette, hauteurVignette, posXDiamant, posYDiamant, largeurVignette, hauteurVignette);
+            //On augmente la valeur de la vignette
+            indexVignette++;
+            //On calcule sourceX
+            sourceX = indexVignette * largeurVignette;
+            //On joue l'image du diamant animé à l'infini
+            if (indexVignette >= 4){
+                indexVignette = -1;
+            }
         }
 
 
