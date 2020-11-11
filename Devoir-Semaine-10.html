@@ -232,8 +232,14 @@
             sourceX = indexVignette * largeurVignette;
             //On joue l'image du diamant animé à l'infini
             if (indexVignette >= 4){
-                indexVignette = -1;
+                //ajustement de l'index
+                indexVignette = 0;
             }
+
+            //Solutionnaire de la prof - bug rencontré à l'affichage de la vignette #5, problème expliqué et compris.
+            // if (indexVignette ==nbVignettes){
+            //     indexVignette = 0;
+            // }
         }
 
 
