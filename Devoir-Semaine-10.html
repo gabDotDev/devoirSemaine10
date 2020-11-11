@@ -128,7 +128,7 @@
             }
             
             //On part le jeu si le joueur appuie sur la touche Enter
-            if (event.keyCode == 13) {
+            if (event.keyCode == 13 && debutJeu == false) {
                 actualiserJeu();
                 //On part le setInterval qui actualise le jeu
                 intervalIDActualiserJeu = setInterval(actualiserJeu, 1000/60);
